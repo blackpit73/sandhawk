@@ -1455,6 +1455,10 @@
 							>
 						</File>
 						<File
+							RelativePath=".\hRexxapi.h"
+							>
+						</File>
+						<File
 							RelativePath=".\hscutl.h"
 							>
 						</File>

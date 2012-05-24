@@ -771,6 +771,7 @@ noinst_HEADERS = hostinfo.h     \
                  chain.h        \
                  extstring.h    \
                  hRexx.h        \
+                 hRexxapi.h     \
                  $(extra_dynamic_SRC)
 
 cckd: cckd2ckd$(EXEEXT)  \
