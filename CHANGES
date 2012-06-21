@@ -1,3 +1,5 @@
+20 Jun 2012 Update configure to recognize GCC versions; use -march=native when
+            supported by GCC; correct debug option generation - Mark L. Gaubatz
 23 May 2012 Fix INTLOCK bug in PTF and STSI instructions causing deadlock
             during SYNCHRONIZE_CPUS leading to eventual Machine Check
             identified by Neale Ferguson [neale@sinenomine.net] -- Fish
