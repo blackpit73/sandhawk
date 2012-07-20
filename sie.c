@@ -534,7 +534,7 @@ U64     dreg;
             facility_mask = &(regs->mainstor[fld]);
             GUESTREGS->facility_list[0] &= (facility_mask[0]
 #if defined(FEATURE_ESAME)
-        /* Prevent current architecture mode being masked */ | 0x60
+        /* Prevent current architecture mode being masked */ | 0x40
 #endif
                                                                    );
             for(i = 1; i < STFL_BYTESIZE; i++)
