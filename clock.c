@@ -613,20 +613,35 @@ TOD etod_clock(REGS *regs, ETOD* ETOD, ETOD_format format)
          */
         if (regs)
         {
+            register U64    cpuad;
+            register U64    amask;
+            register U64    lmask;
+
+            /* Set CPU address masks */
+            if (sysblk.maxcpu <= 64)
+                amask = 0x3F, lmask = 0xFFFFFFFFFFC00000ULL;
+            else if (sysblk.maxcpu <= 128)
+                amask = 0x7F, lmask = 0xFFFFFFFFFF800000ULL;
+            else /* sysblk.maxcpu <= 256) */
+                amask = 0xFF, lmask = 0xFFFFFFFFFF000000ULL;
+
+            /* Clean CPU address */
+            cpuad = (U64)regs->cpuad & amask;
+
             switch (format)
             {
                 /* Standard TOD format */
                 case ETOD_standard:
-          low &= 0xC000000000000000ULL;
-          low |= (U64)((regs->cpuad) & 0x3F) << 56;
+                    low &= lmask << 40;
+                    low |= cpuad << 56;
                     break;
 
                 /* Extended TOD format */
                 case ETOD_extended:
-          low &= 0xFFFFFFFFFF800000ULL;
-          low |= (U64)((regs->cpuad) & 0x3F) << 16;
+                    low &= lmask;
+                    low |= cpuad << 16;
                     if (low == 0)
-            low |= 0x0000000000400000ULL;
+                        low = (amask + 1) << 16;
                     low |= regs->todpr;
                     break;
             }
