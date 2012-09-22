@@ -26,6 +26,8 @@
 # 30/11/10 Remove obsolete CVS test, add special gsed test for Apple/Darwin
 #          (Enrico Sorichetti by Fish)
 # 06/12/10 M4 fix (Enrico Sorichetti by Fish)
+# 22/09/12 autoconf 2.63 required for AS_VERSION_COMPARE (Phil Roberts)
+# 22/09/12 gcc version 3 is required for Hercules version 4 (RB)
 #****************************************************************************
 
 use strict;
@@ -34,11 +36,11 @@ use strict;
 
 my @req = qw(
      svn         0      0  http://subversion.tigris.org/
-     autoconf    2.5    0  http://www.gnu.org/directory/autoconf.html
+     autoconf    2.63   0  http://www.gnu.org/directory/autoconf.html
      automake    1.9    0  http://www.gnu.org/directory/automake.html
      flex        2.5    0  http://www.gnu.org/directory/flex.html
      gawk        3.0    0  http://www.gnu.org/directory/gawk.html
-     gcc         2.95   0  http://www.gnu.org/directory/gcc.html
+     gcc         3.0    0  http://www.gnu.org/directory/gcc.html
      gettext     0.11   0  http://www.gnu.org/directory/gettext.html
      grep        0      0  http://www.gnu.org/directory/grep.html
      libiconv    1.8    1  http://www.gnu.org/directory/libiconv.html
