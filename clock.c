@@ -89,7 +89,7 @@ typedef int     clockid_t;
 #define CLOCK_BOOTTIME_ALARM            9
 
 
-static INLINE int
+static inline int
 clock_gettime ( clockid_t clk_id, struct timespec *ts )
 {
     register int    result;
@@ -436,7 +436,7 @@ void set_tod_steering(double steering)
 
 
 /* Start a new episode */
-static INLINE void start_new_episode()
+static inline void start_new_episode()
 {
     hw_offset = hw_tod.high - universal_tod.high;
     hw_episode = hw_tod.high;
@@ -449,7 +449,7 @@ static INLINE void start_new_episode()
 
 
 /* Prepare for a new episode */
-static INLINE void prepare_new_episode()
+static inline void prepare_new_episode()
 {
     if(episode_current == &episode_new)
     {
@@ -691,13 +691,13 @@ tod_clock (REGS* regs)
 
 
 #if defined(_FEATURE_ECPSVM)
-static INLINE S32 ecps_vtimer(REGS *regs)
+static inline S32 ecps_vtimer(REGS *regs)
 {
     return (S32)TOD_TO_ITIMER((S64)(regs->ecps_vtimer - hw_clock()));
 }
 
 
-static INLINE void set_ecps_vtimer(REGS *regs, S32 vtimer)
+static inline void set_ecps_vtimer(REGS *regs, S32 vtimer)
 {
     regs->ecps_vtimer = (U64)(hw_clock() + ITIMER_TO_TOD(vtimer));
     regs->ecps_oldtmr = vtimer;
@@ -705,7 +705,7 @@ static INLINE void set_ecps_vtimer(REGS *regs, S32 vtimer)
 #endif /*defined(_FEATURE_ECPSVM)*/
 
 
-static INLINE S32 int_timer(REGS *regs)
+static inline S32 int_timer(REGS *regs)
 {
     return (S32)TOD_TO_ITIMER((S64)(regs->int_timer - hw_clock()));
 }
@@ -800,13 +800,13 @@ int pending = 0;
  *
  */
 
-static INLINE unsigned int
+static inline unsigned int
 is_leapyear ( const unsigned int year )
 {
     return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
 }
 
-static INLINE S64 lyear_adjust(int epoch)
+static inline S64 lyear_adjust(int epoch)
 {
 int year, leapyear;
 TOD tod = hw_clock();
@@ -835,7 +835,7 @@ int default_yroffset = 0;
 int default_tzoffset = 0;
 
 
-static INLINE void configure_time()
+static inline void configure_time()
 {
 int epoch;
 S64 ly1960;
@@ -1080,7 +1080,7 @@ int clock_hresume(void *file)
 
 
 #if defined(FEATURE_INTERVAL_TIMER)
-static INLINE void ARCH_DEP(_store_int_timer_2) (REGS *regs,int getlock)
+static inline void ARCH_DEP(_store_int_timer_2) (REGS *regs,int getlock)
 {
 S32 itimer;
 S32 vtimer=0;

@@ -53,7 +53,7 @@ typedef struct ETOD { U64 low, high; } ETOD;
 #endif
 
 
-static INLINE void
+static inline void
 ETOD_add (ETOD* result, const ETOD a, const ETOD b)
 {
   register uint64_t high = a.high + b.high;
@@ -64,7 +64,7 @@ ETOD_add (ETOD* result, const ETOD a, const ETOD b)
   result->low  = low;
 }
 
-static INLINE void
+static inline void
 ETOD_sub (ETOD* result, const ETOD a, const ETOD b)
 {
   register uint64_t high = a.high - b.high;
@@ -75,7 +75,7 @@ ETOD_sub (ETOD* result, const ETOD a, const ETOD b)
   result->low  = low;
 }
 
-static INLINE void
+static inline void
 ETOD_shift (ETOD* result, const ETOD a, int shift)
 {
   register uint64_t high;
@@ -179,7 +179,7 @@ ETOD* host_ETOD (ETOD*);                /* Retrieve extended TOD     */
 /*            generation.                                                     */
 /*----------------------------------------------------------------------------*/
 
-static INLINE TOD
+static inline TOD
 host_tod (void)
 {
   register TOD  result;
@@ -214,7 +214,7 @@ host_tod (void)
 }
 
 
-static INLINE TOD
+static inline TOD
 ETOD2TOD (const ETOD ETOD)
 {
   return ( (ETOD.high << 8) | (ETOD.low >> 56) );
