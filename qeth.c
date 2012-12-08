@@ -3187,16 +3187,17 @@ void*    remove_and_free_any_buffers_on_chain( OSA_GRP* grp )
 /*-------------------------------------------------------------------*/
 /* Get MAC address                                                   */
 /*-------------------------------------------------------------------*/
-int      GetMACAddr( char*   pszNetDevName,
+int      GetMACAddr( char*   pszIfName,
                      char*   pszMACAddr,
                      int     szMACAddrLen,
                      MAC*    pMACAddr )
 {
+#if defined(SIOCGIFHWADDR)
     int fd, rc;
     struct hifr hifr;
 
     memset( &hifr, 0, sizeof(struct hifr) );
-    strncpy( hifr.hifr_name, pszNetDevName, sizeof(hifr.hifr_name)-1 );
+    strncpy( hifr.hifr_name, pszIfName, sizeof(hifr.hifr_name)-1 );
 
     if (pszMACAddr) {
         memset( pszMACAddr, 0, szMACAddrLen );
@@ -3206,14 +3207,11 @@ int      GetMACAddr( char*   pszNetDevName,
     }
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
-        return -1;
-    }
-
     rc = TUNTAP_IOCtl( fd, SIOCGIFHWADDR, (char*)&hifr );
-    if (rc < 0 ) {
+    close(fd);
+
+    if (rc < 0 )
         return -1;
-    }
 
     if (pszMACAddr) {
         snprintf( pszMACAddr, szMACAddrLen-1,
@@ -3226,18 +3224,42 @@ int      GetMACAddr( char*   pszNetDevName,
                   (unsigned char)hifr.hifr_hwaddr.sa_data[5] );
     }
     if (pMACAddr) {
-        memcpy( pMACAddr, &hifr.hifr_hwaddr, IFHWADDRLEN );
+    memcpy( pMACAddr, &hifr.hifr_hwaddr, IFHWADDRLEN );
     }
 
-    close(fd);
+    return 0;
+#else /* !defined(SIOCGIFHWADDR) */
+    MAC mac;
+
+    mac[0] = 0x00;
+    mac[1] = 0x00;
+    mac[2] = 0x5E;
+    mac[3] = 0x12;
+    mac[4] = 0x34;
+    mac[5] = 0x56;
+
+    if (pszMACAddr) {
+        snprintf( pszMACAddr, szMACAddrLen-1,
+                  "%02X:%02X:%02X:%02X:%02X:%02X",  /* upper case */
+                  (unsigned char)mac[0],
+                  (unsigned char)mac[1],
+                  (unsigned char)mac[2],
+                  (unsigned char)mac[3],
+                  (unsigned char)mac[4],
+                  (unsigned char)mac[5] );
+    }
+    if (pMACAddr) {
+    memcpy( pMACAddr, &mac, IFHWADDRLEN );
+    }
 
     return 0;
+#endif /* defined(SIOCGIFHWADDR) */
 }
 
 /*-------------------------------------------------------------------*/
 /* Get MTU value                                                     */
 /*-------------------------------------------------------------------*/
-int      GetMTU( char*   pszNetDevName,
+int      GetMTU( char*   pszIfName,
                  char*   pszMTU,
                  int     szMTULen,
                  int*    pMTU )
@@ -3246,7 +3268,7 @@ int      GetMTU( char*   pszNetDevName,
     struct hifr hifr;
 
     memset( &hifr, 0, sizeof(struct hifr) );
-    strncpy( hifr.hifr_name, pszNetDevName, sizeof(hifr.hifr_name)-1 );
+    strncpy( hifr.hifr_name, pszIfName, sizeof(hifr.hifr_name)-1 );
 
     if (pszMTU) {
         memset( pszMTU, 0, szMTULen );
@@ -3262,6 +3284,7 @@ int      GetMTU( char*   pszNetDevName,
 
     rc = TUNTAP_IOCtl( fd, SIOCGIFMTU, (char*)&hifr );
     if (rc < 0 ) {
+        close(fd);
         return -1;
     }
 
