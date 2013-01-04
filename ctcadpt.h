@@ -286,7 +286,6 @@ struct  _CTCBLK
                                           //   read device
     u_int       fCloseInProgress:1;       // Close in progress
     u_int       fPreconfigured:1;         // TUN device pre-configured
-
     int         iKernBuff;                // Kernel buffer in K bytes.
     int         iIOBuff;                  // I/O buffer in K bytes.
     char        szGuestIPAddr[32];        // IP Address (Guest OS)
