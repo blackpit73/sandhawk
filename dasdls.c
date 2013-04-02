@@ -10,8 +10,8 @@
  *
  * Copyright 2000-2009 by Malcolm Beattie
  * Based on code copyright by Roger Bowler, 1999-2009
- *
- *
+ * Decode of F1 DSCB by Chris Cheney, 2013, based on
+ * P.E. Havercan's VTOCLIST mainframe utility
  *
  */
 
@@ -23,8 +23,8 @@
 
 /* function prototypes */
 int end_of_track        (BYTE *p);
-int list_contents       (CIFBLK *cif, char *volser, DSXTENT *extent);
-int do_ls_cif           (CIFBLK *cif);
+int list_contents       (CIFBLK *cif, char *volser, DSXTENT *extent, char *fname, char *sfname);
+int do_ls_cif           (CIFBLK *cif, char *fname, char *sfname);
 int do_ls               (char *file, char *sfile);
 
 static int needsep = 0;         /* Write newline separator next time */
@@ -33,6 +33,8 @@ static int needsep = 0;         /* Write newline separator next time */
 int yroffs = 0;                 /* year offset */
 int dsnlen = 44;                /* dsname length (default value) */
 int runflgs = 0;                /* flags set from command line */
+/* distinct CIF instance for F3 DSCB processing else screw up the F1 processing */
+CIFBLK *cifx = NULL;
 
 /* -------------------------- */
 /* runflgs - flag settings    */
@@ -47,6 +49,9 @@ int runflgs = 0;                /* flags set from command line */
 #define rf_header  (0x8)
 /* show F1 info               */
 #define rf_info    (0x10)
+
+/* suppress tedious HHC00403I and HHC00414I messages */
+#define CIFOPENOPTS (IMAGE_OPEN_NORMAL | IMAGE_OPEN_QUIET)
 
 int main(int argc, char **argv)
 {
@@ -93,7 +98,7 @@ char           *strtok_str = NULL;
     if (argc < 2) 
     {
         sprintf(msgbuf, "%s [-hdr] [-dsnl[=n]] [-info] [-caldt] [-refdt] [-expdt] [-yroffs[=n]]", pgm);
-        fprintf( stderr, MSG( HHC02463, "I", &msgbuf, "" ) );
+        fprintf( stderr, MSG( HHC02463, "I", msgbuf, "" ) );
         exit(2);
     }
 
@@ -215,8 +220,8 @@ void pdate(BYTE* value, int runflgs)
 void pdatex(BYTE* value, int runflgs)
 {
     (value[0] | value[1] ? pdate(value, runflgs)
-                              : printf(runflgs & rf_caldate ? " ---------"
-                                                            : " -----"));
+                         : printf(runflgs & rf_caldate ? " ---------"
+                                                       : " -----"));
 }
 
 void pbyte(BYTE* value)
@@ -229,9 +234,79 @@ void phword(BYTE* value)
     printf(" %5d", (value[0] << 8) | value[1]);
 }
 
+/* dataset extent processing */
+
+int hword(HWORD value)
+{
+    return (value[0] << 8) + value[1];
+}
+
+int extent_size(DSXTENT *ext, int heads)
+{
+    return heads * (hword(ext->xtecyl) - hword(ext->xtbcyl)) +
+                   (hword(ext->xtetrk) - hword(ext->xtbtrk)) + 1;
+}
+
+int extents_array(DSXTENT extents[], int max, int *count, int heads)
+{
+    int i;
+    int size = 0;
+    for (i = 0; (*count > 0) && (i < max); i++)
+        if ((&(extents[i]))->xttype)
+        {
+            size += extent_size(&(extents[i]), heads);
+            *count -= 1;
+        }
+        else fprintf(stderr, "*** extents_array type failure\n");
+    return size;
+}
+
+int chainf3(int *size, BYTE *ptr, int *count, char *fname, char *sfname)
+{
+    FORMAT3_DSCB *f3dscb = NULL;
+    int rc = 0; /* prime for success */
+
+    while ((*count > 0) && (ptr[0] || ptr[1] || ptr[2] || ptr[3] || ptr[4]))
+    {
+//*debug*/fprintf(stderr, "*** %d %.2x%.2x %.2x%.2x %.2x\n",
+//*debug*/        *count, ptr[0], ptr[1], ptr[2], ptr[3], ptr[4]);
+
+        if (cifx == NULL)
+            if (NULL == (cifx = open_ckd_image(fname, sfname,
+                                               /* use IMAGE_OPEN_QUIET to suppress inline msgs */
+                                               O_RDONLY|O_BINARY, CIFOPENOPTS)))
+            {
+//*debug*/      fprintf(stderr, "*** Open cifx failed\n");
+
+                return -1; /* open failed */
+            }
+        if ((read_block(cifx, hword(&(ptr[0])), hword(&(ptr[2])), ptr[4],
+                        (BYTE **)&f3dscb, NULL, NULL, NULL) == 0))
+            switch (f3dscb->ds3fmtid)
+            {
+            case 0xf3: if ((f3dscb->ds3keyid[0] != 0x03) || (f3dscb->ds3keyid[1] != 0x03) ||
+                           (f3dscb->ds3keyid[2] != 0x03) || (f3dscb->ds3keyid[3] != 0x03))
+                           break; /* break out of switch */
+                       else
+                       {
+                           *size += extents_array(&(f3dscb->ds3extnt[0]), 4, count, cifx->heads);
+                           *size += extents_array(&(f3dscb->ds3adext[0]), 9, count, cifx->heads);
+                       }
+            case 0xf2: ptr = &(f3dscb->ds3ptrds[0]); /* same offset for both F2 and F3 DSCBs */
+                       continue; /* continue while loop */
+            } /* end of switch */
+        rc = -1;
+
+//*debug*/fprintf(stderr, "*** DSCB id=0x%.2x\n", f3dscb->ds3fmtid);
+
+        break;
+    } /* end of while loop */
+    return rc;
+}
+
 /* list_contents partly based on dasdutil.c:search_key_equal */
 
-int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent)
+int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent, char *fname, char *sfname)
 {
     u_int cext = 0;
     u_int ccyl = (extent[cext].xtbcyl[0] << 8) | extent[cext].xtbcyl[1];
@@ -248,10 +323,11 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent)
 
     if (runflgs & rf_header)
     {
+        /* display column headers allowing for optional columns */
         printf("%*s%s", -dsnlen, "Dsname", runflgs & rf_caldate ? "  Created " :" CREDT");
         printf(runflgs & rf_refdate ? (runflgs & rf_caldate ? " Last Ref." : " REFDT") : "");
         printf(runflgs & rf_expdate ? (runflgs & rf_caldate ? " Exp. Date" : " EXPDT") : "");
-        printf(" ORG RECFM LRECL BLKSZ Key Ext Alo. SecAlo\n");
+        printf(" ORG RECFM LRECL BLKSZ Key  Trks%%Use#Ext 2ndry_alloc\n");
     }
 
     do {
@@ -349,10 +425,35 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent)
                     int lrecl = (f1dscb->ds1lrecl[0] << 8) | f1dscb->ds1lrecl[1];
                     printf((lrecl ? " %5d" : "      "), lrecl);
 
-                    /* BLKSZ, KEYLN, #EXT */
+                    /* BLKSZ, KEYLN */
 
                     phword(f1dscb->ds1blkl);     /* BLKSZ */
                     pbyte(&(f1dscb->ds1keyl));   /* KEYLN */
+
+                    /* space allocated */
+
+                    int numext = f1dscb->ds1noepv;
+                    int space = 0;
+                    space += extents_array(&(f1dscb->ds1ext1), 3, &numext, cif->heads);
+                    chainf3(&space, &(f1dscb->ds1ptrds[0]), &numext, fname, sfname);
+                    printf(" %5d", space);
+
+                    /* % of allocated spaced used */
+
+                    double value;
+                    /* fraction of last track used = 1 - ds1trbal / trkzize */
+                    value = 1.0 - (double)hword(&(f1dscb->ds1trbal[0])) / (cif->trksz);
+                    /* add in the number of full tracks used */
+                    value += hword(&(f1dscb->ds1lstar[0]));
+                    if (space)
+                    {
+                        value = value * 100 / space; /* % space used */
+                        printf(" %3.0f", value);
+                    }
+                    else printf("    "); /* avoiding divide by zero */
+
+                    /* Number of extents */
+
                     pbyte(&(f1dscb->ds1noepv));  /* #EXT */
 
                     /* SCALO */
@@ -391,7 +492,7 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent)
 
 /* do_ls_cif based on dasdutil.c:build_extent_array  */
 
-int do_ls_cif(CIFBLK *cif)
+int do_ls_cif(CIFBLK *cif, char *fname, char *sfname)
 {
     int rc;
     U32 cyl;
@@ -424,14 +525,17 @@ int do_ls_cif(CIFBLK *cif)
         fprintf( stderr, MSG( HHC02471, "E", "Format 4 DSCB" ) );
         return -1;
     }
-    return list_contents(cif, volser, &f4dscb->ds4vtoce);
+    return list_contents(cif, volser, &f4dscb->ds4vtoce, fname, sfname);
 }
 
 int do_ls(char *file, char *sfile)
 {
-    CIFBLK *cif = open_ckd_image(file, sfile, O_RDONLY|O_BINARY, IMAGE_OPEN_NORMAL);
+    int rc = 0;
+    CIFBLK *cif = open_ckd_image(file, sfile, O_RDONLY|O_BINARY, CIFOPENOPTS);
 
-    if (!cif || do_ls_cif(cif) || close_ckd_image(cif))
-        return -1;
+    if (!cif || do_ls_cif(cif, file, sfile) || close_ckd_image(cif))
+        rc = -1;
+    if (cifx && close_ckd_image(cifx)) /* if necc., close the CIFBLK used for F3 DSCBs */
+        rc = -1;
     return 0;
 }
