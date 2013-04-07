@@ -353,6 +353,12 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent, char *fname, char 
 
             char dsname[sizeof(f1dscb->ds1dsnam) + 1];
             char txtrecfm[5] = "";                    /* recfm text */
+            char *tmpstr;
+            int lrecl;
+            int numext;
+            int space;
+            double value;
+
 
             make_asciiz(dsname, sizeof(dsname), f1dscb->ds1dsnam, kl);
 
@@ -377,7 +383,7 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent, char *fname, char 
 
                     /* DSORG */
 
-                    char* tmpstr = "??";
+                    tmpstr = "??";
                     if (f1dscb->ds1dsorg[0] == 0 || f1dscb->ds1dsorg[0] == DSORG_U)
                     {
                        if (f1dscb->ds1dsorg[1] == DSORG_AM) tmpstr = "VS";
@@ -422,7 +428,7 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent, char *fname, char 
     
                     /* LRECL */
 
-                    int lrecl = (f1dscb->ds1lrecl[0] << 8) | f1dscb->ds1lrecl[1];
+                    lrecl = (f1dscb->ds1lrecl[0] << 8) | f1dscb->ds1lrecl[1];
                     printf((lrecl ? " %5d" : "      "), lrecl);
 
                     /* BLKSZ, KEYLN */
@@ -432,15 +438,13 @@ int list_contents(CIFBLK *cif, char *volser, DSXTENT *extent, char *fname, char 
 
                     /* space allocated */
 
-                    int numext = f1dscb->ds1noepv;
-                    int space = 0;
-                    space += extents_array(&(f1dscb->ds1ext1), 3, &numext, cif->heads);
+                    numext = f1dscb->ds1noepv;
+                    space = extents_array(&(f1dscb->ds1ext1), 3, &numext, cif->heads);
                     chainf3(&space, &(f1dscb->ds1ptrds[0]), &numext, fname, sfname);
                     printf(" %5d", space);
 
                     /* % of allocated spaced used */
 
-                    double value;
                     /* fraction of last track used = 1 - ds1trbal / trkzize */
                     value = 1.0 - (double)hword(&(f1dscb->ds1trbal[0])) / (cif->trksz);
                     /* add in the number of full tracks used */
