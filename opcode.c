@@ -3200,7 +3200,7 @@ static zz_func opcode_b9xx[0x100][GEN_MAXARCH] = {
  /*B925*/ GENx___x___x900 (store_using_real_address_long,RRE,"STURG"),
  /*B926*/ GENx37Xx390x900 (load_byte_register,RRE,"LBR"),                          /*@Z9*/
  /*B927*/ GENx37Xx390x900 (load_halfword_register,RRE,"LHR"),                      /*@Z9*/
- /*B928*/ GENx37Xx390x900 (perform_cryptographic_key_management_operation,RRE,"PCKMO"), /*810*/
+ /*B928*/ GENx37Xx390x900 (perform_cryptographic_key_management_operation,none,"PCKMO"), /*810*/
  /*B929*/ GENx___x___x___ ,
  /*B92A*/ GENx37Xx390x900 (cipher_message_with_cipher_feedback,RRE,"KMF"),       /*810*/
  /*B92B*/ GENx37Xx390x900 (cipher_message_with_output_feedback,RRE,"KMO"),       /*810*/

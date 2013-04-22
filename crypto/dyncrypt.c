@@ -4793,19 +4793,15 @@ DEF_INST(perform_cryptographic_computation)
 #ifdef OPTION_PCC_DEBUG
   WRGMSG_ON;
   WRGMSG(HHC90100, "D", "PCC: perform cryptographic computation");
-  WRGMSG(HHC90101, "D", 1, r1);
-  WRGMSG(HHC90102, "D", regs->GR(r1));
-  WRGMSG(HHC90101, "D", 2, r2);
-  WRGMSG(HHC90102, "D", regs->GR(r2));
-  WRGMSG(HHC90103, "D", regs->GR(r2 + 1));
   WRGMSG(HHC90104, "D", 0, regs->GR(0));
+  WRGMSG(HHC90105, "D", TRUEFALSE(GR0_m(regs)));
   WRGMSG(HHC90106, "D", GR0_fc(regs));
   WRGMSG(HHC90104, "D", 1, regs->GR(1));
   WRGMSG_OFF;
 #endif /* #ifdef OPTION_PCC_DEBUG */
 
   /* Check special conditions */
-  if(unlikely(!r1 || r1 & 0x01 || !r2 || r2 & 0x01))
+  if(unlikely(GR0_m(regs)))
     ARCH_DEP(program_interrupt)(regs, PGM_SPECIFICATION_EXCEPTION);
 
   switch(GR0_fc(regs))
