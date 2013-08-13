@@ -157,7 +157,7 @@
 /* dctsz      : dictionary size                                               */
 /* smbsz      : symbol size                                                   */
 /*----------------------------------------------------------------------------*/
-#define GR0_dcten(regs)      (0x100 << GR0_cdss(regs))
+#define GR0_dcten(regs)      (0x100 << GR0_cdss((regs)))
 #define GR0_dctsz(regs)      (0x800 << GR0_cdss((regs)))
 #define GR0_smbsz(regs)      (GR0_cdss((regs)) + 8)
 
@@ -169,7 +169,7 @@
 /* sttoff: symbol-translation-table offset                                    */
 /*----------------------------------------------------------------------------*/
 #define GR1_cbn(regs)        (((regs)->GR_L(1) & 0x00000007))
-#define GR1_dictor(regs)     (GR_A(1, regs) & ((GREG) 0xFFFFFFFFFFFFF000ULL))
+#define GR1_dictor(regs)     (GR_A(1, (regs)) & ((GREG) 0xFFFFFFFFFFFFF000ULL))
 #define GR1_sttoff(regs)     (((regs)->GR_L(1) & 0x00000FF8) << 4)
 
 /*----------------------------------------------------------------------------*/
@@ -1986,4 +1986,3 @@ static int ARCH_DEP(cmpsc_vstore)(struct ec *ec, BYTE *buf, unsigned len)
     #include "cmpsc.c"
   #endif /* #ifdef _ARCHMODE3 */
 #endif /* #ifndef _GEN_ARCH */
-
