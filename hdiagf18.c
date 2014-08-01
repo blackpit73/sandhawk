@@ -113,6 +113,8 @@ CPB cap =
           + 0x05
 #elif defined(_AIX)
           + 0x06
+#elif defined(__ANDROID__)
+          + 0x07
 #endif
         ,
         /* Compatibility Operation Options in big endian format */

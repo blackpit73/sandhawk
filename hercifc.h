@@ -46,11 +46,13 @@
 #if defined(ENABLE_IPV6)
 //FIXME: Temporary, should be part of the make system.
   /* The in6_ifreq structure can be found in include/linux/ipv6.h */
+#ifndef __ANDROID__ /* avoid error: redefinition of 'struct in6_ifreq' */
   struct in6_ifreq {
     struct in6_addr ifr6_addr;
     U32   ifr6_prefixlen;
     int   ifr6_ifindex;
   };
+#endif
 #endif /* defined(ENABLE_IPV6) */
 // The Hercules ifr (hifr) structure. Why? Because an ifreq stucture is
 // not large enough to hold inet6 addresses, an in6_ifreq structure is

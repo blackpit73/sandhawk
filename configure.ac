@@ -14,8 +14,7 @@ AC_CONFIG_AUX_DIR(autoconf)             # (directory containing auxillary build 
 AM_INIT_AUTOMAKE(hercules,4.00)         # (the version of our software package)
 AM_CONFIG_HEADER(config.h)              # (the file the resulting configure script will produce)
 AM_MAINTAINER_MODE()
-AC_CANONICAL_HOST()                     # (sets $host_cpu, $host_vendor, and $host_os)
-AC_CANONICAL_TARGET()                   # (sets $target_cpu, $target_vendor, and $target_os)
+AC_CANONICAL_SYSTEM()                   # (sets ${host,build,target}_{cpu,vendor,os}
 
 ###############################################################################
 #   Programs section...
